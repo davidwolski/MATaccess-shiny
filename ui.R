@@ -1,6 +1,6 @@
 library(plotly)
 library(leaflet)
-navbarPage("checkMATe", id="nav",
+navbarPage("MATaccess", id="nav",
            
            tabPanel("Map",
                     
@@ -36,9 +36,7 @@ navbarPage("checkMATe", id="nav",
                              selectInput(
                                "states", 
                                "States", 
-                               c("All states"="", 
-                                 structure(state.abb, names=state.name), 
-                                 "Washington, DC"="DC"), 
+                               state_selector, 
                                multiple=FALSE)
                       ),
                       

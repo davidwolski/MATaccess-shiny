@@ -4,6 +4,7 @@ library(ggplot2)
 library(leaflet)
 library(plotly)
 library(RColorBrewer)
+library(tigris)
 library(shinyjs)
 library(stringr)
 
@@ -105,7 +106,7 @@ function(input, output, session) {
   # Define color palette
   pal <- colorNumeric(
     palette = "YlOrRd",
-    domain = range(1,max(merged_res_select$`Predicted Mortality Rate`, 
+    domain = range(0,max(merged_res_select$`Predicted Mortality Rate`, 
                          na.rm = TRUE), 
                    na.rm = TRUE)
   )
@@ -170,6 +171,15 @@ function(input, output, session) {
                                `County` == input$counties) %>%
         geo_join(all_counties, ., "GEOID", "FIPS Code", how = "inner")
       
+      treatment_popup <- paste0("<strong>Facility Name: </strong>", 
+                                treatment_clean$Name,
+                                "<br><strong>City/State: </strong>", 
+                                treatment_clean$City, 
+                                ", ",
+                                treatment_clean$`State Abbreviated`,
+                                "<br><strong>Zip Code: </strong>", 
+                                treatment_clean$Zip)
+      
       map %>%
         addPolygons(data = df_year,
                     fillColor = ~ pal(Predicted.Mortality.Rate),
@@ -178,8 +188,9 @@ function(input, output, session) {
                     weight = 1, 
                     smoothFactor = 0.2,
                     popup = NULL, stroke = FALSE) %>%
-        addCircleMarkers(data = treatment, stroke = FALSE, 
-                         clusterOptions = markerClusterOptions()) %>% 
+        addCircleMarkers(data = treatment_clean, stroke = FALSE, 
+                         clusterOptions = markerClusterOptions(), 
+                         popup = treatment_popup) %>% 
         fitBounds(lng1 = df_year@bbox[[3]],lat1 = df_year@bbox[[4]],
                   lng2 = df_year@bbox[[1]],lat2 = df_year@bbox[[2]])
     }
