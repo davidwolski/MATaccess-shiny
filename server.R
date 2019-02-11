@@ -105,36 +105,43 @@ function(input, output, session) {
   
   # Define color palette
   pal <- colorNumeric(
-    palette = "YlOrRd",
+    palette = "Spectral",
     domain = range(0,max(merged_res_select$`Predicted Mortality Rate`, 
                          na.rm = TRUE), 
-                   na.rm = TRUE)
+                   na.rm = TRUE),
+    reverse = TRUE
   )
   
   
   output$map <- renderLeaflet({
     
     map <-  leaflet() %>%
-      addProviderTiles("MapBox", 
-                       options = providerTileOptions(id = "mapbox.light", 
-                                                     noWrap = FALSE, 
+      addProviderTiles("MapBox",
+                       options = providerTileOptions(id = "mapbox.light",
+                                                     noWrap = FALSE,
                                                      accessToken = tokn))
+      # addProviderTiles(providers$CartoDB.Positron)
+    
     if (input$states == "" ) {
       # shinyjs::disable("recalc")
       
       map %>% 
         addPolygons(data = all_states,
-                    fillColor = "#202020",
+                    # fillColor = "#202020",
                     color = "#b2aeae", # you need to use hex colors
                     fillOpacity = 0.7, 
-                    weight = 1, 
+                    weight = 1,
+                    highlightOptions = highlightOptions(color = "white", 
+                                                        weight = 2,
+                                                        bringToFront = TRUE),
+                    label = all_states$state_name,
                     smoothFactor = 0.2,
-                    popup = NULL, stroke = FALSE)
-    }else if (input$states != "" & input$counties == "") {
+                    popup = NULL)
+    } else if (input$states != "" & input$counties == "") {
       df_year <- dplyr::filter(merged_res_select, 
                                Year == input$year,
                                `State Abbreviated` == input$states) %>%
-        geo_join(all_counties, ., "GEOID", "FIPS Code", how = "inner")
+        geo_join(all_counties, ., "geoid", "FIPS Code", how = "inner")
       
       state_popup <- paste0("<strong>Year: </strong>", 
                             df_year$Year,
@@ -154,7 +161,11 @@ function(input, output, session) {
         addPolygons(data = df_year,
                     fillColor = ~ pal(Predicted.Mortality.Rate),
                     color = "#b2aeae", # you need to use hex colors
-                    fillOpacity = 0.5, 
+                    fillOpacity = 0.7, 
+                    highlightOptions = highlightOptions(color = "white", 
+                                                        weight = 2,
+                                                        bringToFront = TRUE),
+                    label = df_year$County,
                     weight = 1, 
                     smoothFactor = 0.2,
                     popup = state_popup, stroke = FALSE) %>% 
@@ -163,7 +174,7 @@ function(input, output, session) {
                   pal = pal, 
                   values = ~Predicted.Mortality.Rate,
                   title = "Predicted Mortality Rate <br> (per 10,000)",
-                  opacity = 0.5)
+                  opacity = 0.7)
     }else{
       df_year <- dplyr::filter(merged_res_select, 
                                Year == input$year,
@@ -184,7 +195,7 @@ function(input, output, session) {
         addPolygons(data = df_year,
                     fillColor = ~ pal(Predicted.Mortality.Rate),
                     color = "#b2aeae", # you need to use hex colors
-                    fillOpacity = 0.3, 
+                    fillOpacity = 0.5, 
                     weight = 1, 
                     smoothFactor = 0.2,
                     popup = NULL, stroke = FALSE) %>%
